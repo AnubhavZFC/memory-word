@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Word_Year_Tracker - Word Vocabulary Tracker</title>
-    <meta name="description" content="A clean, mobile-friendly multi-year daily vocabulary tracker PWA with color categorization and standalone support." />
+    <meta name="description" content="A clean, mobile-friendly multi-year daily vocabulary tracker PWA with fast inline typing, long-press editing, and color categorization." />
     
     <!-- PWA & Standalone Fullscreen Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes" />
@@ -23,7 +23,7 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23064e3b'/%3E%3Ctext x='90' y='122' font-size='105' font-weight='bold' fill='white' font-family='sans-serif' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E" />
 
     <style>
-      /* Reset & Core Design System */
+      /* Reset & Fullscreen Viewport Architecture */
       *, *::before, *::after {
         box-sizing: border-box;
         margin: 0;
@@ -57,24 +57,42 @@
         --cat-neutral-text: #1e293b;
       }
 
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      /* Strict Fullscreen Viewport: 100dvh without bottom empty space */
+      html, body {
+        height: 100%;
+        height: 100vh;
+        height: 100dvh;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        position: fixed;
+        inset: 0;
         background-color: var(--color-bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
         color: var(--color-text-main);
-        min-height: 100vh;
-        min-height: -webkit-fill-available;
-        display: flex;
-        flex-direction: column;
-        overflow-x: hidden;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+
+      .app-root {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        height: 100vh;
+        height: 100dvh;
+        width: 100%;
+        overflow: hidden;
+        position: relative;
       }
 
       /* Scrollbar Styling */
       ::-webkit-scrollbar {
-        height: 7px;
-        width: 7px;
+        height: 6px;
+        width: 6px;
       }
       ::-webkit-scrollbar-track {
         background: #f1f5f9;
@@ -87,42 +105,42 @@
         background: #94a3b8;
       }
 
-      /* Top Header */
+      /* Top Header: Fixed at top */
       header.app-header {
+        flex-shrink: 0;
         background-color: var(--color-header);
         color: #ffffff;
-        padding: 10px 16px;
+        padding: 8px 12px;
+        padding-top: max(8px, env(safe-area-inset-top, 0px));
         display: flex;
         align-items: center;
         justify-content: space-between;
-        position: sticky;
-        top: 0;
         z-index: 50;
-        box-shadow: 0 4px 12px rgba(6, 78, 59, 0.25);
-        gap: 12px;
+        box-shadow: 0 2px 8px rgba(6, 78, 59, 0.25);
+        gap: 8px;
       }
 
       .header-title-box {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         min-width: 0;
       }
       .app-logo {
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
         background: rgba(255, 255, 255, 0.18);
         border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 8px;
+        border-radius: 7px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
-        font-size: 16px;
+        font-size: 15px;
         flex-shrink: 0;
       }
       .app-title-text {
-        font-size: clamp(0.74rem, 3.4vw, 1.05rem);
+        font-size: clamp(0.72rem, 3.4vw, 1.05rem);
         font-weight: 700;
         letter-spacing: -0.01em;
         white-space: nowrap;
@@ -133,7 +151,7 @@
       .header-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex-shrink: 0;
       }
 
@@ -149,9 +167,9 @@
         background: rgba(255, 255, 255, 0.15);
         border: 1px solid rgba(255, 255, 255, 0.35);
         color: #ffffff;
-        padding: 6px 28px 6px 12px;
-        border-radius: 8px;
-        font-size: 0.95rem;
+        padding: 5px 22px 5px 8px;
+        border-radius: 7px;
+        font-size: 0.85rem;
         font-weight: 700;
         cursor: pointer;
         outline: none;
@@ -168,10 +186,10 @@
       }
       .year-select-arrow {
         position: absolute;
-        right: 9px;
+        right: 6px;
         pointer-events: none;
-        width: 12px;
-        height: 12px;
+        width: 11px;
+        height: 11px;
         fill: #ffffff;
       }
 
@@ -180,34 +198,36 @@
         background: rgba(255, 255, 255, 0.15);
         border: 1px solid rgba(255, 255, 255, 0.3);
         color: #ffffff;
-        padding: 6px 10px;
-        border-radius: 8px;
-        font-size: 0.85rem;
+        padding: 5px 8px;
+        border-radius: 7px;
+        font-size: 0.82rem;
         font-weight: 600;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         transition: background 0.15s;
       }
       .btn-header:hover {
         background: rgba(255, 255, 255, 0.25);
       }
       .btn-header svg {
-        width: 16px;
-        height: 16px;
+        width: 15px;
+        height: 15px;
       }
 
-      /* Secondary Sub-header: Search, Filter, Stats */
+      /* Secondary Sub-header: Fixed below header */
       .sub-header {
+        flex-shrink: 0;
         background: #ffffff;
         border-bottom: 1px solid var(--color-border);
-        padding: 8px 16px;
+        padding: 6px 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 8px;
         font-size: 0.85rem;
+        z-index: 30;
       }
 
       .legend-group {
@@ -230,12 +250,13 @@
         gap: 5px;
         padding: 3px 8px;
         border-radius: 9999px;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 600;
         border-width: 1px;
         border-style: solid;
         cursor: pointer;
         transition: transform 0.1s, opacity 0.2s;
+        flex-shrink: 0;
       }
       .legend-pill:hover {
         transform: translateY(-1px);
@@ -264,7 +285,8 @@
       .sub-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        flex-shrink: 0;
       }
       .search-box {
         position: relative;
@@ -272,64 +294,69 @@
         align-items: center;
       }
       .search-input {
-        padding: 5px 10px 5px 28px;
+        padding: 4px 8px 4px 26px;
         border-radius: 6px;
         border: 1px solid var(--color-border);
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         outline: none;
         background: #f8fafc;
-        width: 150px;
+        width: 100px;
         transition: width 0.2s, border-color 0.2s;
       }
       .search-input:focus {
-        width: 180px;
+        width: 135px;
         border-color: var(--color-header);
         background: #ffffff;
       }
       .search-icon {
         position: absolute;
-        left: 8px;
-        width: 14px;
-        height: 14px;
+        left: 7px;
+        width: 13px;
+        height: 13px;
         color: var(--color-text-muted);
         pointer-events: none;
       }
 
-      /* Main Grid Area */
+      /* Main Grid Area: Flex-grow (flex: 1) to fill all space between top and bottom bar */
       main.app-main {
-        flex: 1;
+        flex: 1 1 0%;
+        min-height: 0;
+        height: 100%;
         display: flex;
         flex-direction: column;
         overflow: hidden;
         position: relative;
+        background: #f8fafc;
       }
 
       .grid-viewport {
-        flex: 1;
+        flex: 1 1 0%;
+        min-height: 0;
+        height: 100%;
         overflow-x: auto;
-        overflow-y: auto;
+        overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
-        background: #f8fafc;
-        padding-bottom: 24px;
+        display: flex;
+        padding-bottom: 0;
       }
 
       .dates-grid {
-        display: inline-flex;
+        display: flex;
         min-width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+        height: 100%;
+        align-items: stretch;
       }
 
       /* Grid Column */
       .day-column {
-        flex: 0 0 170px;
-        min-width: 170px;
-        max-width: 185px;
+        flex: 0 0 160px;
+        min-width: 160px;
+        max-width: 175px;
+        height: 100%;
         display: flex;
         flex-direction: column;
         background: #ffffff;
         border-right: 1px solid var(--color-border);
-        border-bottom: 1px solid var(--color-border);
       }
       .day-column.is-today {
         background: #fdfdfd;
@@ -340,25 +367,26 @@
 
       /* Header Row: Dark Green Background with Bold White Date */
       .col-header {
+        flex-shrink: 0;
         background-color: var(--color-header);
         color: #ffffff;
-        padding: 10px 8px;
+        padding: 8px 6px;
         text-align: center;
         position: sticky;
         top: 0;
-        z-index: 20;
+        z-index: 10;
         border-bottom: 2px solid var(--color-header-border);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
       }
       .col-header-dayname {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         opacity: 0.82;
-        margin-bottom: 2px;
+        margin-bottom: 1px;
       }
       .col-header-date {
-        font-size: 0.88rem;
+        font-size: 0.84rem;
         font-weight: 700;
         letter-spacing: 0.01em;
         white-space: nowrap;
@@ -371,45 +399,53 @@
         display: inline-block;
         background: #facc15;
         color: #713f12;
-        font-size: 0.62rem;
+        font-size: 0.6rem;
         font-weight: 800;
-        padding: 1px 5px;
-        border-radius: 4px;
-        margin-top: 3px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        margin-top: 2px;
         letter-spacing: 0.04em;
       }
 
-      /* Column Body: Multiple Rows of Vocabulary Words */
+      /* Column Body: Scrolls vertically and extends all the way down */
       .col-body {
+        flex: 1 1 0%;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         padding: 8px 6px;
         display: flex;
         flex-direction: column;
-        gap: 7px;
-        flex: 1;
-        min-height: 240px;
+        gap: 6px;
       }
 
       /* Vocabulary Word Card */
       .word-card {
-        padding: 9px 8px;
+        padding: 8px 8px;
         border-radius: 8px;
         border-width: 1px;
         border-style: solid;
         cursor: pointer;
         transition: transform 0.12s, box-shadow 0.12s;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
         position: relative;
         word-break: break-word;
-      }
-      .word-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        touch-action: pan-y;
       }
       .word-card:active {
         transform: scale(0.98);
       }
+      .word-card.card-pressing {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 2px var(--color-header);
+        filter: brightness(0.95);
+      }
+      .word-card.selected {
+        outline: 2px solid var(--color-header);
+        box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.25);
+      }
 
-      /* Category Styling */
+      /* Category Colors */
       .word-card.yellow {
         background-color: var(--cat-yellow-bg);
         border-color: var(--cat-yellow-border);
@@ -437,25 +473,58 @@
       }
       .word-card.search-highlighted {
         outline: 2px solid #0284c7;
-        box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+        box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
       }
 
+      .word-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 4px;
+      }
       .word-text {
         font-weight: 700;
-        font-size: 0.88rem;
-        line-height: 1.25;
-        margin-bottom: 2px;
+        font-size: 0.86rem;
+        line-height: 1.22;
+        flex: 1;
       }
+      /* Small Edit Icon Button for explicit 1-tap modal edit */
+      .word-card-edit-btn {
+        background: rgba(0, 0, 0, 0.05);
+        border: none;
+        color: inherit;
+        opacity: 0.65;
+        border-radius: 4px;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: opacity 0.15s, background 0.15s;
+        margin-top: -2px;
+        margin-right: -2px;
+      }
+      .word-card-edit-btn:hover {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.12);
+      }
+      .word-card-edit-btn svg {
+        width: 11px;
+        height: 11px;
+      }
+
       .word-note {
-        font-size: 0.74rem;
-        line-height: 1.3;
+        font-size: 0.72rem;
+        line-height: 1.25;
         opacity: 0.88;
         margin-top: 3px;
         font-weight: 400;
       }
       .word-badge {
         display: inline-block;
-        font-size: 0.62rem;
+        font-size: 0.6rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -463,15 +532,44 @@
         margin-top: 4px;
       }
 
+      /* Excel-Like Fast Inline Word Entry */
+      .inline-word-box {
+        margin-top: 2px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .inline-word-input {
+        width: 100%;
+        padding: 7px 8px;
+        border: 2px solid var(--color-header);
+        border-radius: 6px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(6, 78, 59, 0.18);
+        font-family: inherit;
+      }
+      .inline-word-input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+      }
+      .inline-word-hint {
+        font-size: 0.62rem;
+        color: #64748b;
+        padding-left: 2px;
+      }
+
       /* Add Word Button under Day Column */
       .btn-add-day-word {
-        margin-top: auto;
         background: transparent;
         border: 1px dashed #cbd5e1;
         color: #64748b;
-        padding: 7px 6px;
+        padding: 6px;
         border-radius: 6px;
-        font-size: 0.75rem;
+        font-size: 0.73rem;
         font-weight: 600;
         cursor: pointer;
         display: flex;
@@ -479,6 +577,7 @@
         justify-content: center;
         gap: 4px;
         transition: all 0.15s;
+        margin-top: auto;
       }
       .btn-add-day-word:hover {
         background: #f1f5f9;
@@ -486,43 +585,44 @@
         color: #0f172a;
       }
       .btn-add-day-word svg {
-        width: 14px;
-        height: 14px;
+        width: 13px;
+        height: 13px;
       }
 
-      /* Bottom Navigation Bar: 12-Month Carousel */
+      /* Bottom Month Navigation Bar: STICKY AT VERY BOTTOM (0px margin/padding below it) */
       nav.month-nav-bar {
+        flex-shrink: 0;
         background: #ffffff;
         border-top: 1px solid var(--color-border);
-        box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.06);
-        padding: 8px 12px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        padding: 6px 8px;
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
         display: flex;
         align-items: center;
-        position: sticky;
-        bottom: 0;
+        gap: 6px;
         z-index: 40;
-        gap: 8px;
+        margin: 0;
+        width: 100%;
       }
 
       .nav-arrow-btn {
-        width: 38px;
-        height: 38px;
-        border-radius: 8px;
+        width: 34px;
+        height: 34px;
+        border-radius: 7px;
         background: #f8fafc;
         border: 1px solid var(--color-border);
         color: #1e293b;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 700;
         cursor: pointer;
         flex-shrink: 0;
-        transition: background 0.15s, border-color 0.15s;
+        transition: background 0.15s;
       }
       .nav-arrow-btn:hover {
         background: #e2e8f0;
-        border-color: #cbd5e1;
       }
       .nav-arrow-btn:active {
         transform: scale(0.94);
@@ -531,7 +631,7 @@
       .month-tabs-track {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
         overflow-x: auto;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
@@ -543,18 +643,18 @@
       }
 
       .month-tab-btn {
-        padding: 7px 12px;
+        padding: 6px 10px;
         border-radius: 9999px;
         border: 1px solid transparent;
         background: #f1f5f9;
         color: #475569;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
         white-space: nowrap;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
         transition: all 0.15s;
         flex-shrink: 0;
       }
@@ -569,7 +669,7 @@
         box-shadow: 0 2px 6px rgba(6, 78, 59, 0.35);
       }
       .month-tab-count {
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         padding: 1px 5px;
         border-radius: 9999px;
         background: rgba(0, 0, 0, 0.12);
@@ -582,7 +682,7 @@
       .modal-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(15, 23, 42, 0.6);
+        background: rgba(15, 23, 42, 0.65);
         backdrop-filter: blur(3px);
         display: flex;
         align-items: center;
@@ -603,7 +703,7 @@
         width: 100%;
         max-width: 440px;
         border-radius: 14px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
         border: 1px solid var(--color-border);
         overflow: hidden;
         transform: scale(0.95);
@@ -614,7 +714,7 @@
       }
 
       .modal-header {
-        padding: 14px 18px;
+        padding: 12px 16px;
         background: #f8fafc;
         border-bottom: 1px solid var(--color-border);
         display: flex;
@@ -623,7 +723,7 @@
       }
       .modal-title {
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1rem;
         color: #0f172a;
       }
       .btn-close-modal {
@@ -632,7 +732,7 @@
         color: #64748b;
         font-size: 1.3rem;
         cursor: pointer;
-        padding: 4px;
+        padding: 2px 6px;
         line-height: 1;
         border-radius: 6px;
       }
@@ -642,49 +742,49 @@
       }
 
       .modal-body {
-        padding: 18px;
+        padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 12px;
       }
 
       .form-group {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 5px;
       }
       .form-label {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 600;
         color: #475569;
         text-transform: uppercase;
         letter-spacing: 0.03em;
       }
-      .form-input, .form-textarea, .form-select {
+      .form-input, .form-textarea {
         width: 100%;
-        padding: 9px 12px;
+        padding: 8px 10px;
         border: 1px solid var(--color-border);
-        border-radius: 8px;
-        font-size: 0.92rem;
+        border-radius: 7px;
+        font-size: 0.9rem;
         outline: none;
         background: #ffffff;
         color: #0f172a;
         font-family: inherit;
       }
-      .form-input:focus, .form-textarea:focus, .form-select:focus {
+      .form-input:focus, .form-textarea:focus {
         border-color: var(--color-header);
         box-shadow: 0 0 0 2px rgba(6, 78, 59, 0.15);
       }
       .form-textarea {
         resize: vertical;
-        min-height: 68px;
+        min-height: 64px;
       }
 
       /* Color Category Picker */
       .color-picker-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
+        gap: 6px;
       }
       .color-chip-radio {
         display: none;
@@ -693,12 +793,12 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
-        padding: 10px 6px;
-        border-radius: 8px;
+        gap: 3px;
+        padding: 8px 4px;
+        border-radius: 7px;
         border: 2px solid transparent;
         cursor: pointer;
-        font-size: 0.72rem;
+        font-size: 0.7rem;
         font-weight: 700;
         text-align: center;
         transition: all 0.15s;
@@ -706,7 +806,7 @@
       .color-chip-radio:checked + .color-chip-label {
         border-color: #0f172a;
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
       }
       .color-chip-label.yellow {
         background: var(--cat-yellow-bg);
@@ -730,27 +830,27 @@
       }
 
       .modal-footer {
-        padding: 14px 18px;
+        padding: 12px 16px;
         background: #f8fafc;
         border-top: 1px solid var(--color-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px;
       }
       .modal-footer-right {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
       }
 
       .btn-primary {
         background: var(--color-header);
         color: #ffffff;
-        padding: 8px 16px;
-        border-radius: 8px;
+        padding: 7px 14px;
+        border-radius: 7px;
         border: none;
-        font-size: 0.88rem;
+        font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
         transition: background 0.15s;
@@ -761,10 +861,10 @@
       .btn-secondary {
         background: #f1f5f9;
         color: #475569;
-        padding: 8px 14px;
-        border-radius: 8px;
+        padding: 7px 12px;
+        border-radius: 7px;
         border: 1px solid var(--color-border);
-        font-size: 0.88rem;
+        font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
       }
@@ -775,10 +875,10 @@
       .btn-danger {
         background: #fee2e2;
         color: #b91c1c;
-        padding: 8px 12px;
-        border-radius: 8px;
+        padding: 7px 10px;
+        border-radius: 7px;
         border: 1px solid #fecaca;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         font-weight: 600;
         cursor: pointer;
       }
@@ -789,23 +889,27 @@
       /* Notification Toast */
       .toast {
         position: fixed;
-        bottom: 74px;
+        bottom: 60px;
         left: 50%;
         transform: translateX(-50%) translateY(20px);
         background: #0f172a;
         color: #ffffff;
-        padding: 10px 18px;
+        padding: 8px 16px;
         border-radius: 9999px;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         font-weight: 600;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
         opacity: 0;
         pointer-events: none;
-        transition: all 0.25s ease;
+        transition: all 0.2s ease;
         z-index: 120;
         display: flex;
         align-items: center;
         gap: 8px;
+        max-width: 90vw;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .toast.show {
         opacity: 1;
@@ -814,159 +918,156 @@
 
       /* Responsive Adjustments for Mobile */
       @media (max-width: 640px) {
-        .app-title-text {
-          font-size: 0.88rem;
-        }
         .day-column {
           flex: 0 0 148px;
           min-width: 148px;
         }
         .col-header-date {
-          font-size: 0.82rem;
-        }
-        .sub-header {
-          padding: 6px 10px;
+          font-size: 0.8rem;
         }
       }
       @media (max-width: 480px) {
         header.app-header {
-          padding: 8px 10px;
+          padding: 6px 10px;
+          padding-top: max(6px, env(safe-area-inset-top, 0px));
           gap: 6px;
         }
         .app-logo {
-          width: 28px;
-          height: 28px;
-          font-size: 14px;
-        }
-        .app-title-text {
-          font-size: 0.72rem;
-          letter-spacing: -0.02em;
+          width: 26px;
+          height: 26px;
+          font-size: 13px;
         }
         .year-select {
-          padding: 4px 20px 4px 7px;
-          font-size: 0.82rem;
-        }
-        .year-select-arrow {
-          right: 5px;
+          padding: 4px 18px 4px 6px;
+          font-size: 0.78rem;
         }
         .btn-header {
-          padding: 5px 6px;
+          padding: 4px 6px;
         }
         .sub-header {
-          padding: 6px 8px;
+          padding: 5px 8px;
           gap: 6px;
         }
         .search-input {
-          width: 90px;
-          font-size: 0.75rem;
-          padding: 4px 6px 4px 24px;
+          width: 85px;
+          font-size: 0.72rem;
+          padding: 3px 6px 3px 22px;
         }
         .search-input:focus {
-          width: 120px;
+          width: 110px;
+        }
+        nav.month-nav-bar {
+          padding: 4px 6px;
+          padding-bottom: max(5px, env(safe-area-inset-bottom, 0px));
+        }
+        .month-tab-btn {
+          padding: 5px 8px;
+          font-size: 0.75rem;
         }
       }
     </style>
   </head>
   <body>
-    <!-- Top Header Bar: Word Vocabulary Tracker & Year Selector -->
-    <header class="app-header">
-      <div class="header-title-box">
-        <div class="app-logo">W</div>
-        <div class="app-title-text">Word Vocabulary Tracker</div>
+    <div class="app-root">
+      <!-- Fixed Top Header Bar -->
+      <header class="app-header">
+        <div class="header-title-box">
+          <div class="app-logo">W</div>
+          <div class="app-title-text">Word Vocabulary Tracker</div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Year Dropdown Selector -->
+          <div class="year-selector-wrap" title="Switch Year">
+            <select id="yearSelect" class="year-select" aria-label="Select Year">
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+            <svg class="year-select-arrow" viewBox="0 0 20 20">
+              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+            </svg>
+          </div>
+
+          <!-- Quick Fast Inline Add Trigger Button in Header -->
+          <button id="btnHeaderFastAdd" class="btn-header" title="Fast Add Word (Inline)">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <!-- Backup / Settings Button -->
+          <button id="btnOpenSyncModal" class="btn-header" title="Backup & Export">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
+              <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
+              <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
+            </svg>
+          </button>
+
+          <!-- Install PWA Button (Visible when installable) -->
+          <button id="btnPWAInstall" class="btn-header" style="display: none;" title="Install PWA">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Fixed Sub-header: Highlights & Search -->
+      <div class="sub-header">
+        <div class="legend-group">
+          <span style="font-weight: 700; color: #475569; font-size: 0.72rem; text-transform: uppercase;">Highlights:</span>
+          <div class="legend-pill yellow" onclick="filterByCategory('yellow')" title="Filter Soft Yellow Words">
+            <span>Fate, Trace, Succession</span>
+          </div>
+          <div class="legend-pill blue" onclick="filterByCategory('blue')" title="Filter Soft Blue Words">
+            <span>Facility, However, Campaign</span>
+          </div>
+          <div class="legend-pill red" onclick="filterByCategory('red')" title="Filter Soft Red/Pink Words">
+            <span>Slash, Astonishing</span>
+          </div>
+          <div class="legend-pill neutral" id="pillClearFilter" style="display:none;" onclick="clearCategoryFilter()" title="Clear active filter">
+            <span>✕ Clear</span>
+          </div>
+        </div>
+
+        <div class="sub-actions">
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+            </svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search..." autocomplete="off" />
+          </div>
+          <button id="btnTodayScroll" class="btn-secondary" style="padding: 3px 8px; font-size: 0.74rem;" title="Scroll to Today">
+            Today
+          </button>
+        </div>
       </div>
 
-      <div class="header-actions">
-        <!-- Year Dropdown Selector -->
-        <div class="year-selector-wrap" title="Switch Year">
-          <select id="yearSelect" class="year-select" aria-label="Select Year">
-            <option value="2025">2025</option>
-            <option value="2026" selected>2026</option>
-            <option value="2027">2027</option>
-            <option value="2028">2028</option>
-          </select>
-          <svg class="year-select-arrow" viewBox="0 0 20 20">
-            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-          </svg>
+      <!-- Main Data Grid Area: Flex-1 to fill all vertical space -->
+      <main class="app-main">
+        <div id="gridViewport" class="grid-viewport">
+          <div id="datesGrid" class="dates-grid">
+            <!-- Dynamically populated via JavaScript -->
+          </div>
+        </div>
+      </main>
+
+      <!-- Bottom Navigation Bar: STICKY AT VERY BOTTOM OF MOBILE SCREEN -->
+      <nav class="month-nav-bar">
+        <button id="btnPrevMonth" class="nav-arrow-btn" title="Previous Month" aria-label="Previous Month">&lt;</button>
+        
+        <div id="monthTabsTrack" class="month-tabs-track">
+          <!-- 12 Months: Jan .. Dec -->
         </div>
 
-        <!-- Quick Add Word Button -->
-        <button id="btnOpenAddModal" class="btn-header" title="Add New Word">
-          <svg viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-          </svg>
-          <span style="display:none;" id="addWordLabel">Add</span>
-        </button>
-
-        <!-- Backup / Settings Button -->
-        <button id="btnOpenSyncModal" class="btn-header" title="Backup & Export">
-          <svg viewBox="0 0 20 20" fill="currentColor">
-            <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
-            <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
-            <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
-          </svg>
-        </button>
-
-        <!-- Install PWA Button (Visible when installable) -->
-        <button id="btnPWAInstall" class="btn-header" style="display: none;" title="Install PWA">
-          <svg viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-    </header>
-
-    <!-- Sub-header: Color Highlights Legend & Filter / Search -->
-    <div class="sub-header">
-      <div class="legend-group">
-        <span style="font-weight: 700; color: #475569; font-size: 0.75rem; text-transform: uppercase;">Highlights:</span>
-        <div class="legend-pill yellow" onclick="filterByCategory('yellow')" title="Filter Soft Yellow Words">
-          <span>Fate, Trace, Succession</span>
-        </div>
-        <div class="legend-pill blue" onclick="filterByCategory('blue')" title="Filter Soft Blue Words">
-          <span>Facility, However, Campaign</span>
-        </div>
-        <div class="legend-pill red" onclick="filterByCategory('red')" title="Filter Soft Red/Pink Words">
-          <span>Slash, Astonishing</span>
-        </div>
-        <div class="legend-pill neutral" id="pillClearFilter" style="display:none;" onclick="clearCategoryFilter()" title="Clear active filter">
-          <span>✕ Clear</span>
-        </div>
-      </div>
-
-      <div class="sub-actions">
-        <div class="search-box">
-          <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-          </svg>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search word..." autocomplete="off" />
-        </div>
-        <button id="btnTodayScroll" class="btn-secondary" style="padding: 4px 9px; font-size: 0.76rem;" title="Scroll to Today">
-          Today
-        </button>
-      </div>
+        <button id="btnNextMonth" class="nav-arrow-btn" title="Next Month" aria-label="Next Month">&gt;</button>
+      </nav>
     </div>
 
-    <!-- Main Grid: Horizontal Date Columns (No Bonus Column, No Marks Section) -->
-    <main class="app-main">
-      <div id="gridViewport" class="grid-viewport">
-        <div id="datesGrid" class="dates-grid">
-          <!-- Dynamically populated via JavaScript -->
-        </div>
-      </div>
-    </main>
-
-    <!-- Bottom Navigation Bar: 12-Month Navigation Tabs with < and > Arrows -->
-    <nav class="month-nav-bar">
-      <button id="btnPrevMonth" class="nav-arrow-btn" title="Previous Month" aria-label="Previous Month">&lt;</button>
-      
-      <div id="monthTabsTrack" class="month-tabs-track">
-        <!-- 12 Months: Jan .. Dec -->
-      </div>
-
-      <button id="btnNextMonth" class="nav-arrow-btn" title="Next Month" aria-label="Next Month">&gt;</button>
-    </nav>
-
-    <!-- Modal: Edit / Add Vocabulary Word -->
+    <!-- Modal: Detailed Edit Vocabulary Word (Long-Press / Double-Tap / Edit Icon) -->
     <div id="wordModal" class="modal-backdrop">
       <div class="modal-box">
         <div class="modal-header">
@@ -982,13 +1083,13 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Category Color</label>
+            <label class="form-label">Change Highlight Color</label>
             <div class="color-picker-grid">
               <label>
                 <input type="radio" name="wordCategory" value="yellow" class="color-chip-radio" />
                 <div class="color-chip-label yellow">
                   <span>Soft Yellow</span>
-                  <span style="font-size:0.6rem;opacity:0.75;">Fate, Trace</span>
+                  <span style="font-size:0.58rem;opacity:0.75;">Fate, Trace</span>
                 </div>
               </label>
 
@@ -996,7 +1097,7 @@
                 <input type="radio" name="wordCategory" value="blue" class="color-chip-radio" />
                 <div class="color-chip-label blue">
                   <span>Soft Blue</span>
-                  <span style="font-size:0.6rem;opacity:0.75;">Facility</span>
+                  <span style="font-size:0.58rem;opacity:0.75;">Facility</span>
                 </div>
               </label>
 
@@ -1004,7 +1105,7 @@
                 <input type="radio" name="wordCategory" value="red" class="color-chip-radio" />
                 <div class="color-chip-label red">
                   <span>Soft Red</span>
-                  <span style="font-size:0.6rem;opacity:0.75;">Slash</span>
+                  <span style="font-size:0.58rem;opacity:0.75;">Slash</span>
                 </div>
               </label>
 
@@ -1012,7 +1113,7 @@
                 <input type="radio" name="wordCategory" value="neutral" class="color-chip-radio" checked />
                 <div class="color-chip-label neutral">
                   <span>Neutral</span>
-                  <span style="font-size:0.6rem;opacity:0.75;">Standard</span>
+                  <span style="font-size:0.58rem;opacity:0.75;">Standard</span>
                 </div>
               </label>
             </div>
@@ -1024,7 +1125,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="wordInputNote">Definition / Example Note (Optional)</label>
+            <label class="form-label" for="wordInputNote">Description / Meaning / Notes</label>
             <textarea id="wordInputNote" class="form-textarea" placeholder="Add definition, synonyms, or usage note..."></textarea>
           </div>
         </div>
@@ -1047,10 +1148,10 @@
         </div>
         <div class="modal-body">
           <p style="font-size:0.86rem; color:#475569; line-height:1.45;">
-            All your vocabulary data is stored safely in your browser’s <strong>localStorage</strong>. You can export a JSON backup, download this exact file to host on GitHub Pages, or restore past backups.
+            All your vocabulary data is stored safely in your browser’s <strong>localStorage</strong>. You can export a JSON backup, download this exact standalone file to host on GitHub Pages, or restore past backups.
           </p>
 
-          <div style="display:flex; flex-direction:column; gap:9px; margin-top:6px;">
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">
             <button class="btn-primary" onclick="exportDataJson()" style="display:flex; align-items:center; justify-content:center; gap:8px;">
               <svg style="width:16px;height:16px;" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -1090,14 +1191,13 @@
       <span id="toastMessage">Action completed</span>
     </div>
 
-    <!-- Pure Standalone JavaScript: Data Architecture, Storage, and Grid Rendering -->
+    <!-- Standalone JavaScript Logic -->
     <script>
       (function () {
         'use strict';
 
         const STORAGE_KEY = 'word_year_tracker_data_v2';
         const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         // Initial Seed Data with requested words and color categorization
@@ -1191,7 +1291,14 @@
         let currentMonth = 11; // 1-indexed: 1 = Jan, 11 = Nov
         let activeFilterCategory = null;
         let searchQuery = '';
+        let activeInlineDay = null; // Currently active inline input day number
         let deferredPWAInstallPrompt = null;
+
+        // Long Press tracking variables
+        let longPressTimer = null;
+        let pointerStartX = 0;
+        let pointerStartY = 0;
+        let didLongPressFire = false;
 
         // DOM Element References
         const yearSelect = document.getElementById('yearSelect');
@@ -1200,7 +1307,7 @@
         const monthTabsTrack = document.getElementById('monthTabsTrack');
         const btnPrevMonth = document.getElementById('btnPrevMonth');
         const btnNextMonth = document.getElementById('btnNextMonth');
-        const btnOpenAddModal = document.getElementById('btnOpenAddModal');
+        const btnHeaderFastAdd = document.getElementById('btnHeaderFastAdd');
         const btnOpenSyncModal = document.getElementById('btnOpenSyncModal');
         const btnTodayScroll = document.getElementById('btnTodayScroll');
         const searchInput = document.getElementById('searchInput');
@@ -1230,7 +1337,7 @@
               }
             }
           } catch (e) {
-            console.warn('Failed to parse localStorage data, loading seed data.', e);
+            console.warn('Failed to parse localStorage data, loading default seed data.', e);
           }
           return JSON.parse(JSON.stringify(DEFAULT_SEED_DATA));
         }
@@ -1313,7 +1420,7 @@
           return count;
         }
 
-        // --- Render Functions ---
+        // --- Rendering ---
         function renderYearDropdown() {
           const yearsSet = new Set(['2025', '2026', '2027', '2028']);
           for (const y in appData) {
@@ -1340,6 +1447,7 @@
             btn.addEventListener('click', () => {
               if (currentMonth !== m) {
                 currentMonth = m;
+                activeInlineDay = null;
                 renderMonthTabs();
                 renderGrid();
               }
@@ -1367,7 +1475,7 @@
             col.className = `day-column ${isToday ? 'is-today' : ''} ${isWeekend ? 'is-weekend' : ''}`;
             col.id = `day-col-${d}`;
 
-            // Header Row: Dark green with bold white date (NO spreadsheet headers)
+            // Header Row: Dark green with bold white date
             const header = document.createElement('div');
             header.className = `col-header ${isToday ? 'today' : ''}`;
             header.innerHTML = `
@@ -1380,65 +1488,268 @@
             // Column Body: Multiple rows containing vocabulary words
             const body = document.createElement('div');
             body.className = 'col-body';
+            body.id = `col-body-${d}`;
 
             const words = getWordsForDay(currentYear, currentMonth, d);
 
             words.forEach(wordObj => {
-              const card = document.createElement('div');
-              const cat = wordObj.category || 'neutral';
-              card.className = `word-card ${cat}`;
-              card.dataset.wordId = wordObj.id;
-              card.dataset.day = d;
-
-              // Check filter and search status
-              if (activeFilterCategory && cat !== activeFilterCategory) {
-                card.classList.add('search-dimmed');
-              }
-              if (searchQuery) {
-                const matchesText = wordObj.text.toLowerCase().includes(searchQuery);
-                const matchesNote = wordObj.note && wordObj.note.toLowerCase().includes(searchQuery);
-                if (matchesText || matchesNote) {
-                  card.classList.add('search-highlighted');
-                } else {
-                  card.classList.add('search-dimmed');
-                }
-              }
-
-              let badgeText = '';
-              if (cat === 'yellow') badgeText = 'Status • Yellow';
-              else if (cat === 'blue') badgeText = 'Status • Blue';
-              else if (cat === 'red') badgeText = 'Status • Red';
-
-              card.innerHTML = `
-                <div class="word-text">${escapeHtml(wordObj.text)}</div>
-                ${wordObj.note ? `<div class="word-note">${escapeHtml(wordObj.note)}</div>` : ''}
-                ${badgeText ? `<div class="word-badge">${badgeText}</div>` : ''}
-              `;
-
-              card.addEventListener('click', () => {
-                openEditWordModal(wordObj, d);
-              });
-
+              const card = createWordCardElement(wordObj, d);
               body.appendChild(card);
             });
 
-            // Touch-friendly Add Word button for each specific day column
-            const addBtn = document.createElement('button');
-            addBtn.className = 'btn-add-day-word';
-            addBtn.innerHTML = `
-              <svg viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-              </svg>
-              <span>Add Word</span>
-            `;
-            addBtn.addEventListener('click', () => {
-              openNewWordModalForDay(d);
+            // Fast Inline Add Box or "+ Add Word" Button
+            if (activeInlineDay === d) {
+              const inlineBox = createInlineEntryElement(d);
+              body.appendChild(inlineBox);
+            } else {
+              const addBtn = document.createElement('button');
+              addBtn.className = 'btn-add-day-word';
+              addBtn.id = `btn-add-${d}`;
+              addBtn.innerHTML = `
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                <span>Add Word</span>
+              `;
+              addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                activateInlineWordEntry(d);
+              });
+              body.appendChild(addBtn);
+            }
+
+            // Clicking empty area of column also initiates fast inline typing
+            body.addEventListener('click', (e) => {
+              if (e.target === body && activeInlineDay !== d) {
+                activateInlineWordEntry(d);
+              }
             });
-            body.appendChild(addBtn);
 
             col.appendChild(body);
             datesGrid.appendChild(col);
           }
+
+          // If an inline input was activated, focus it
+          if (activeInlineDay) {
+            const activeInput = document.getElementById(`inline-input-${activeInlineDay}`);
+            if (activeInput) {
+              activeInput.focus();
+            }
+          }
+        }
+
+        // Creates Word Card DOM with Long-Press, Double-Tap, and Edit Icon interactions
+        function createWordCardElement(wordObj, day) {
+          const card = document.createElement('div');
+          const cat = wordObj.category || 'neutral';
+          card.className = `word-card ${cat}`;
+          card.dataset.wordId = wordObj.id;
+          card.dataset.day = day;
+
+          if (activeFilterCategory && cat !== activeFilterCategory) {
+            card.classList.add('search-dimmed');
+          }
+          if (searchQuery) {
+            const matchesText = wordObj.text.toLowerCase().includes(searchQuery);
+            const matchesNote = wordObj.note && wordObj.note.toLowerCase().includes(searchQuery);
+            if (matchesText || matchesNote) {
+              card.classList.add('search-highlighted');
+            } else {
+              card.classList.add('search-dimmed');
+            }
+          }
+
+          let badgeText = '';
+          if (cat === 'yellow') badgeText = 'Status • Yellow';
+          else if (cat === 'blue') badgeText = 'Status • Blue';
+          else if (cat === 'red') badgeText = 'Status • Red';
+
+          card.innerHTML = `
+            <div class="word-card-header">
+              <div class="word-text">${escapeHtml(wordObj.text)}</div>
+              <button class="word-card-edit-btn" title="Edit word details & color" aria-label="Edit word">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
+            </div>
+            ${wordObj.note ? `<div class="word-note">${escapeHtml(wordObj.note)}</div>` : ''}
+            ${badgeText ? `<div class="word-badge">${badgeText}</div>` : ''}
+          `;
+
+          // Small edit icon: 1-click opens Detailed Edit Modal
+          const editBtn = card.querySelector('.word-card-edit-btn');
+          editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditWordModal(wordObj, day);
+          });
+
+          // Double Click / Double Tap: Opens Detailed Edit Modal
+          card.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            openEditWordModal(wordObj, day);
+          });
+
+          // 500ms Long Press: Hold cell for 500ms to open Detailed Edit Modal
+          card.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.word-card-edit-btn')) return;
+            didLongPressFire = false;
+            pointerStartX = e.clientX;
+            pointerStartY = e.clientY;
+            card.classList.add('card-pressing');
+
+            longPressTimer = setTimeout(() => {
+              didLongPressFire = true;
+              card.classList.remove('card-pressing');
+              if (navigator.vibrate) {
+                try { navigator.vibrate(50); } catch(err) {}
+              }
+              openEditWordModal(wordObj, day);
+            }, 500);
+          });
+
+          card.addEventListener('pointermove', (e) => {
+            if (!longPressTimer) return;
+            const dist = Math.hypot(e.clientX - pointerStartX, e.clientY - pointerStartY);
+            if (dist > 8) { // User is scrolling vertically or horizontally
+              clearTimeout(longPressTimer);
+              longPressTimer = null;
+              card.classList.remove('card-pressing');
+            }
+          });
+
+          const cancelLongPress = () => {
+            if (longPressTimer) {
+              clearTimeout(longPressTimer);
+              longPressTimer = null;
+            }
+            card.classList.remove('card-pressing');
+          };
+
+          card.addEventListener('pointerup', cancelLongPress);
+          card.addEventListener('pointercancel', cancelLongPress);
+          card.addEventListener('contextmenu', (e) => {
+            e.preventDefault(); // suppress native callout on mobile long-press
+          });
+
+          // Single Tap: Select / Highlight or quick view meaning
+          card.addEventListener('click', (e) => {
+            if (didLongPressFire) {
+              didLongPressFire = false;
+              return;
+            }
+            if (e.target.closest('.word-card-edit-btn')) return;
+
+            document.querySelectorAll('.word-card.selected').forEach(c => {
+              if (c !== card) c.classList.remove('selected');
+            });
+            const isSelected = card.classList.toggle('selected');
+            if (isSelected) {
+              if (wordObj.note) {
+                showToast(`"${wordObj.text}": ${wordObj.note}`);
+              } else {
+                showToast(`"${wordObj.text}" selected (hold 500ms or tap ✎ to edit)`);
+              }
+            }
+          });
+
+          return card;
+        }
+
+        // Excel-Like Fast Inline Word Entry
+        function createInlineEntryElement(day) {
+          const container = document.createElement('div');
+          container.className = 'inline-word-box';
+          container.id = `inline-box-${day}`;
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'inline-word-input';
+          input.id = `inline-input-${day}`;
+          input.placeholder = 'Type word + Enter';
+          input.enterKeyHint = 'done';
+          input.autocomplete = 'off';
+          input.autocapitalize = 'words';
+
+          const hint = document.createElement('div');
+          hint.className = 'inline-word-hint';
+          hint.textContent = 'Enter ↵ to save instantly';
+
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const val = input.value.trim();
+              if (val) {
+                saveInlineWord(day, val);
+              } else {
+                // Empty enter: close inline input
+                activeInlineDay = null;
+                renderGrid();
+              }
+            } else if (e.key === 'Escape') {
+              activeInlineDay = null;
+              renderGrid();
+            }
+          });
+
+          input.addEventListener('blur', () => {
+            // Delay slightly to handle button clicks
+            setTimeout(() => {
+              const val = input.value.trim();
+              if (val) {
+                saveInlineWord(day, val);
+              } else {
+                activeInlineDay = null;
+                renderGrid();
+              }
+            }, 180);
+          });
+
+          container.appendChild(input);
+          container.appendChild(hint);
+          return container;
+        }
+
+        function activateInlineWordEntry(day) {
+          activeInlineDay = day;
+          renderGrid();
+
+          setTimeout(() => {
+            const input = document.getElementById(`inline-input-${day}`);
+            if (input) {
+              input.focus();
+              input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }, 40);
+        }
+
+        function saveInlineWord(day, wordText) {
+          if (!wordText) return;
+
+          const dayWords = getWordsForDay(currentYear, currentMonth, day);
+          const newWord = {
+            id: 'w-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+            text: wordText,
+            category: 'neutral', // Default new words to standard neutral/white background
+            note: ''
+          };
+          dayWords.push(newWord);
+          setWordsForDay(currentYear, currentMonth, day, dayWords);
+
+          showToast(`Saved "${wordText}"`);
+          renderMonthTabs();
+
+          // Keep inline entry active in the same column for rapid Excel-like entry!
+          activeInlineDay = day;
+          renderGrid();
+
+          setTimeout(() => {
+            const input = document.getElementById(`inline-input-${day}`);
+            if (input) {
+              input.value = '';
+              input.focus();
+            }
+          }, 40);
         }
 
         function scrollToToday() {
@@ -1463,31 +1774,12 @@
               todayCol.style.transform = 'scale(1.02)';
               setTimeout(() => {
                 todayCol.style.transform = '';
-              }, 600);
+              }, 500);
             }
           }, 60);
         }
 
-        // --- Modals & Interactions ---
-        function openNewWordModalForDay(day) {
-          wordModalTitle.textContent = `Add Word for ${formatDayHeader(currentYear, currentMonth, day)}`;
-          editWordId.value = '';
-          wordInputText.value = '';
-          wordInputNote.value = '';
-
-          const yStr = String(currentYear);
-          const mStr = String(currentMonth).padStart(2, '0');
-          const dStr = String(day).padStart(2, '0');
-          wordInputDate.value = `${yStr}-${mStr}-${dStr}`;
-
-          // Default category: neutral
-          setCategoryRadio('neutral');
-
-          btnDeleteWord.style.display = 'none';
-          wordModal.classList.add('open');
-          setTimeout(() => wordInputText.focus(), 100);
-        }
-
+        // --- Detailed Edit Modal (Long-Press / Double-Tap / ✎ Edit Icon) ---
         function openEditWordModal(wordObj, day) {
           wordModalTitle.textContent = 'Edit Vocabulary Word';
           editWordId.value = wordObj.id;
@@ -1503,7 +1795,7 @@
 
           btnDeleteWord.style.display = 'inline-block';
           wordModal.classList.add('open');
-          setTimeout(() => wordInputText.focus(), 100);
+          setTimeout(() => wordInputText.focus(), 80);
         }
 
         function setCategoryRadio(cat) {
@@ -1546,12 +1838,10 @@
             targetDay = parseInt(parts[2], 10);
           }
 
-          // If editing an existing word, check if date changed and remove old entry
           if (editWordId.value) {
             removeWordById(editWordId.value);
           }
 
-          // Add to target day
           const dayWords = getWordsForDay(targetYear, targetMonth, targetDay);
           dayWords.push({
             id: id,
@@ -1562,9 +1852,8 @@
           setWordsForDay(targetYear, targetMonth, targetDay, dayWords);
 
           closeWordModal();
-          showToast(`Saved "${text}"`);
+          showToast(`Updated "${text}"`);
 
-          // If user saved into a different month/year, switch to it
           if (currentYear !== targetYear || currentMonth !== targetMonth) {
             currentYear = targetYear;
             currentMonth = targetMonth;
@@ -1574,7 +1863,6 @@
           renderMonthTabs();
           renderGrid();
 
-          // Scroll target day column into view
           setTimeout(() => {
             const col = document.getElementById(`day-col-${targetDay}`);
             if (col) {
@@ -1651,7 +1939,6 @@
         };
 
         window.downloadSelfHtml = function () {
-          // Serializes the entire current HTML document into a standalone file
           const htmlContent = "<!doctype html>\n" + document.documentElement.outerHTML;
           const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
           const url = URL.createObjectURL(blob);
@@ -1725,12 +2012,14 @@
         // --- Event Listeners Initialization ---
         yearSelect.addEventListener('change', (e) => {
           currentYear = parseInt(e.target.value, 10);
+          activeInlineDay = null;
           renderMonthTabs();
           renderGrid();
           showToast(`Switched to Year ${currentYear}`);
         });
 
         btnPrevMonth.addEventListener('click', () => {
+          activeInlineDay = null;
           if (currentMonth > 1) {
             currentMonth--;
           } else {
@@ -1743,6 +2032,7 @@
         });
 
         btnNextMonth.addEventListener('click', () => {
+          activeInlineDay = null;
           if (currentMonth < 12) {
             currentMonth++;
           } else {
@@ -1754,14 +2044,14 @@
           renderGrid();
         });
 
-        btnOpenAddModal.addEventListener('click', () => {
-          // Open for today or day 1 of current month
+        // Fast Header Add button focuses inline input on today's column (or day 1)
+        btnHeaderFastAdd.addEventListener('click', () => {
           const now = new Date();
-          let defaultDay = 1;
+          let targetDay = 1;
           if (now.getFullYear() === currentYear && (now.getMonth() + 1) === currentMonth) {
-            defaultDay = now.getDate();
+            targetDay = now.getDate();
           }
-          openNewWordModalForDay(defaultDay);
+          activateInlineWordEntry(targetDay);
         });
 
         btnOpenSyncModal.addEventListener('click', () => {
@@ -1783,11 +2073,15 @@
           if (e.target === syncModal) closeSyncModal();
         });
 
-        // Keyboard shortcuts
+        // Keyboard navigation
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
             closeWordModal();
             closeSyncModal();
+            if (activeInlineDay) {
+              activeInlineDay = null;
+              renderGrid();
+            }
           }
           if (e.key === 'ArrowLeft' && !document.querySelector('.modal-backdrop.open') && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
             btnPrevMonth.click();
@@ -1823,13 +2117,10 @@
           showToast('Word Vocabulary Tracker installed!');
         });
 
-        // Service Worker Registration for offline capabilities
+        // Offline Service Worker Registration
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            // Register sw.js if served from web server, with fallback
-            navigator.serviceWorker.register('/sw.js').catch(() => {
-              // Ignore if running from local file:// protocol
-            });
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
           });
         }
 
@@ -1838,7 +2129,7 @@
         renderMonthTabs();
         renderGrid();
 
-        // Scroll into today if in 2026/Nov
+        // Scroll to today if viewing today's month
         const now = new Date();
         if (now.getFullYear() === currentYear && (now.getMonth() + 1) === currentMonth) {
           setTimeout(scrollToToday, 250);
